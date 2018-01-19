@@ -36,7 +36,15 @@
 
 		uniform vec2 textureSize; //The width and height of our screen
 		uniform sampler2D bufferTexture; //Our input texture
-		
+	
+		bool compareColor(vec3 a, vec3 b) {
+			bvec3 lt = lessThan(abs(a - b),  vec3(0.25, 0.25, 0.25));
+			if (all(lt)) {
+				return true;
+			}
+			return false;
+		}
+
 		void main() {
 
 			vec2 pt = gl_FragCoord.xy; //for simple scenes, can also use gl_FragCoord instead of uv info, divide by texture size to get a value between 0.0 and 1.0
@@ -67,7 +75,7 @@
 			float tup = cy + 2.0*(1.0/textureSize.y);
 			if (tup > 1.0) { tup = 0.0; }
 
-			vec4 arr[24];
+			vec4 arr[8];
 
 			arr[0] = texture2D( bufferTexture, vec2( cx   , up ));   //N
 			arr[1] = texture2D( bufferTexture, vec2( right, up ));   //NE
@@ -78,76 +86,74 @@
 			arr[6] = texture2D( bufferTexture, vec2( left , cy ));   //W
 			arr[7] = texture2D( bufferTexture, vec2( left , up ));   //NW
 		//		     up up
-			arr[8] = texture2D( bufferTexture, vec2(  cx   , tup ));  
+//			arr[8] = texture2D( bufferTexture, vec2(  cx   , tup ));  
 		//		     down  down
-			arr[17] = texture2D( bufferTexture, vec2( cx,        tdown ));   
+	//		arr[17] = texture2D( bufferTexture, vec2( cx,        tdown ));   
 		//		     right right
-			arr[21] = texture2D( bufferTexture, vec2( tright, cy ));   
+		//	arr[21] = texture2D( bufferTexture, vec2( tright, cy ));   
 		//		     left left
-			arr[13] = texture2D( bufferTexture, vec2( tleft,  cy ));   
+			//arr[13] = texture2D( bufferTexture, vec2( tleft,  cy ));   
 		//		     down  down right 
-			arr[19] = texture2D( bufferTexture, vec2( right,     tdown ));
+			//arr[19] = texture2D( bufferTexture, vec2( right,     tdown ));
 		//		     up up right
-			arr[9] = texture2D( bufferTexture, vec2(  right,     tup ));  
+			//arr[9] = texture2D( bufferTexture, vec2(  right,     tup ));  
 		//		     down  down right  right
-			arr[20] = texture2D( bufferTexture, vec2( tright, tdown ));
+			//arr[20] = texture2D( bufferTexture, vec2( tright, tdown ));
 		//		     right right up
-			arr[22] = texture2D( bufferTexture, vec2( tright, up ));   
+			//arr[22] = texture2D( bufferTexture, vec2( tright, up ));   
 		//		     right right down
-			arr[23] = texture2D( bufferTexture, vec2( tright, down ));  
+			//arr[23] = texture2D( bufferTexture, vec2( tright, down ));  
 		//		     up up right right
-			arr[10] = texture2D( bufferTexture, vec2( tright, tup ));
+			//arr[10] = texture2D( bufferTexture, vec2( tright, tup ));
 		//		     down  down left
-			arr[18] = texture2D( bufferTexture, vec2( left,      tdown )); 
+			//arr[18] = texture2D( bufferTexture, vec2( left,      tdown )); 
 		//		     up up left
-			arr[11] = texture2D( bufferTexture, vec2( left,      tup ));   
+			//arr[11] = texture2D( bufferTexture, vec2( left,      tup ));   
 		//		     up up left left
-			arr[12] = texture2D( bufferTexture, vec2( tleft,  tup )); 
+			//arr[12] = texture2D( bufferTexture, vec2( tleft,  tup )); 
 		//		     left left up
-			arr[14] = texture2D( bufferTexture, vec2( tleft,  up ));   
+			//arr[14] = texture2D( bufferTexture, vec2( tleft,  up ));   
 		//		     left left down 
-			arr[15] = texture2D( bufferTexture, vec2( tleft,  down )); 
+			//arr[15] = texture2D( bufferTexture, vec2( tleft,  down )); 
 		//		     left left down  down
-			arr[16] = texture2D( bufferTexture, vec2( tleft,  tdown ));
+			//arr[16] = texture2D( bufferTexture, vec2( tleft,  tdown ));
 
-
-			int rcnt = 0;
-			int gcnt = 0;
-			int bcnt = 0;
-			for(int i=0;i<24;i++){
-				if (arr[i].r > 0.5) {
-					rcnt++;
-				} else if (arr[i].g > 0.5) {
-					gcnt++;
-				} else if (arr[i].b > 0.5) {
-					bcnt++;
-				} 
+			vec3 colors[4];
+			colors[0] = vec3(0.0, 0.0, 0.0);
+			colors[1] = vec3(1.0, 1.0, 0.0);
+			colors[2] = vec3(1.0, 0.5, 0.0); 
+			colors[3] = vec3(1.0, 0.0, 0.0);
+			int cnts[4];
+			cnts[0] = 0;
+			cnts[1] = 0;
+			cnts[2] = 0;
+			cnts[3] = 0;
+			for(int i=0;i<8;i++){
+				for (int j=0; j<4; j++) {
+					if (compareColor(arr[i].rgb, colors[j])) {
+						cnts[j]++;
+					}
+				}
 			}
-				        
-			if (C.r >= 0.5) { 
-				if (gcnt >= 10) {
-					//Any live cell with two or three live neighbours lives on to the next generation.
-					gl_FragColor = vec4(0.0,1.0,0.0,1.0);
-					
-
-				} else {
-					gl_FragColor = C;
-				}
-			} else if (C.g >= 0.5) { 
-				if (bcnt >= 10) {
-					//Any live cell with two or three live neighbours lives on to the next generation.
-					gl_FragColor = vec4(0.0,0.0,1.0,1.0);
-
-				} else {
-					gl_FragColor = C;
-				}
-			} else if (C.b >= 0.5) { 
-				if (rcnt >= 10) {
-					//Any live cell with two or three live neighbours lives on to the next generation.
-					gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-				} else {
-					gl_FragColor = C;
-				}
+						
+			for (int i=0; i<4; i++) {
+				if (compareColor(C.rgb, colors[i])) { 
+					if (i == 3) {
+						if (cnts[0] >= 3) {
+							//Any live cell with two or three live neighbours lives on to the next generation.
+							gl_FragColor = vec4(colors[0], 1.0);
+						} else {
+							gl_FragColor = C;
+						}
+					} else {
+						if (cnts[i+1] >= 3) {
+							//Any live cell with two or three live neighbours lives on to the next generation.
+							gl_FragColor = vec4(colors[i+1], 1.0);
+						} else {
+							gl_FragColor = C;
+						}
+					}
+				} 
 			}
 
 		 }
@@ -274,20 +280,25 @@ function createDataTexture() {
 
 		var stride = i * 4;
 		let r = Math.random();
-		if (r < 0.33) {
+		if (r < 0.25) {
 			data[ stride ] = 255;
 			data[ stride + 1 ] = 0;
 			data[ stride + 2 ] = 0;
 			data[ stride + 3 ] = 255;
-		} else if (r < 0.66){
-			data[ stride ] = 0;
+		} else if (r < 0.5){
+			data[ stride ] = 255;
 			data[ stride + 1 ] = 255;
 			data[ stride + 2 ] = 0;
 			data[ stride + 3 ] = 255;
-		} else {
+		} else if (r < 0.75){
+			data[ stride ] = 255;
+			data[ stride + 1 ] = 127;
+			data[ stride + 2 ] = 0;
+			data[ stride + 3 ] = 255;
+		} else{
 			data[ stride ] = 0;
 			data[ stride + 1 ] = 0;
-			data[ stride + 2 ] = 255;
+			data[ stride + 2 ] = 0;
 			data[ stride + 3 ] = 255;
 		} 
 			}
