@@ -56,17 +56,48 @@
 	
 	//changing value - we are using this to mix between the two textures
 	uniform float mixVal;
+	uniform float pxStep;
 
 	//this has to have the same name as in the vertex shader. Here, in the fragment shader, we interpolate across the textureCoordinates
 	varying vec2 UV;
 
-      	void main() {
+	void main() {
+		vec3 a = texture2D(t1, vec2(UV.x-pxStep, UV.y-pxStep)).xyz;
+		vec3 b = texture2D(t1, vec2(UV.x, UV.y-pxStep)).xyz;
+		vec3 c = texture2D(t1, vec2(UV.x+pxStep, UV.y-pxStep)).xyz;
+		vec3 d = texture2D(t1, vec2(UV.x-pxStep, UV.y)).xyz;
+		vec3 e = texture2D(t1, vec2(UV.x, UV.y)).xyz;
+		vec3 f = texture2D(t1, vec2(UV.x+pxStep, UV.y)).xyz;
+		vec3 g = texture2D(t1, vec2(UV.x-pxStep, UV.y+pxStep)).xyz;
+		vec3 h = texture2D(t1, vec2(UV.x, UV.y+pxStep)).xyz;
+		vec3 i = texture2D(t1, vec2(UV.x+pxStep, UV.y+pxStep)).xyz;
+		vec3 acc;
+		acc -= a;
+		acc -= b;
+		acc -= c;
+		acc -= d;
+		acc += 8.0 * e;
+		acc -= f;
+		acc -= g;
+		acc -= h;
+		acc -= i;
+		if (acc.x < 0.2) {
+			acc.x = 0.0;
+		} else {
+			acc.x = 1.0;
+		}
+		if (acc.y < 0.2) {
+			acc.y = 0.0;
+		} else {
+			acc.y = 1.0;
+		}
+		if (acc.z < 0.2) {
+			acc.z = 0.0;
+		} else {
+			acc.z = 1.0;
+		}
 
-		vec4 c1 = texture2D(t1, UV);
-		vec4 c2 = texture2D(t2, UV);
-
-        	vec4 col = vec4(mix(c1, c2, mixVal));
-        	gl_FragColor = vec4(col);
+		gl_FragColor = vec4(acc, 1.0);
 	}
 
 	</script>
@@ -85,7 +116,7 @@
 	var material;
 
 
-	var texture1 = new THREE.TextureLoader().load( 'texture1.png' );
+	var texture1 = new THREE.TextureLoader().load( 'image.png' );
 	var texture2 = new THREE.TextureLoader().load( 'texture2.png' );
 
 	var mouseX = 0.0;
@@ -100,7 +131,7 @@
 		container = document.getElementById( 'container' );
 
 		camera = new THREE.PerspectiveCamera( 60.0, window.innerWidth / window.innerHeight, 0.1, 50 );
-		camera.position.z = 4;
+		camera.position.z = 2;
 
 		scene = new THREE.Scene();
 
@@ -124,7 +155,7 @@
 			0.0, 0.0,
 			1.0, 0.0,
 			1.0, 1.0,
-			
+
 			0.0, 0.0,
 			1.0, 1.0,
 			0.0, 1.0,
@@ -139,23 +170,24 @@
 
 		// materials (ie, linking to the shader program)
 		var uniforms = {
-    			t1: { type: "t", value: texture1  },
-    			t2: { type: "t", value: texture2  },
+			t1: { type: "t", value: texture1  },
+			t2: { type: "t", value: texture2  },
 			mixVal: {type: "f", value: 0.0},
+			pxStep: {type: "f", value: 1.0/512.0}
 		};
 	
 
-     		material = new THREE.RawShaderMaterial( {
-			uniforms: uniforms,
-            		vertexShader: vs,
-            		fragmentShader: fs,	
+		material = new THREE.RawShaderMaterial( {
+		uniforms: uniforms,
+				vertexShader: vs,
+				fragmentShader: fs,	
 		} );
 
 
-	      	mesh = new THREE.Mesh( geometry, material );
+		mesh = new THREE.Mesh( geometry, material );
 		mesh.translateX(0.0);
 		mesh.material.side = THREE.DoubleSide; //to render both sides of triangle
-        	scene.add( mesh );
+		scene.add( mesh );
 
 
 		renderer = new THREE.WebGLRenderer();
@@ -187,7 +219,7 @@
 
 		mesh.material.uniforms.mixVal.value = mouseX;
 
-	//	mesh.rotation.z = time * 0.0005;
+		//mesh.rotation.z = time * 0.0005;
 
 		renderer.render( scene, camera );
 	}
