@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>demo - Phong shader</title>
+		<title>Edge Detection</title>
 		<meta charset="utf-8">
 		<style>
 			body {
@@ -52,10 +52,9 @@
 	precision mediump float;
 
 	//special data type used to access texture stored on GPU
-	uniform sampler2D t1, t2;
+	uniform sampler2D t1;
 	
 	//changing value - we are using this to mix between the two textures
-	uniform float mixVal;
 	uniform float pxStep;
 
 	//this has to have the same name as in the vertex shader. Here, in the fragment shader, we interpolate across the textureCoordinates
@@ -81,21 +80,21 @@
 		acc -= g;
 		acc -= h;
 		acc -= i;
-		if (acc.x < 0.2) {
-			acc.x = 0.0;
-		} else {
-			acc.x = 1.0;
-		}
-		if (acc.y < 0.2) {
-			acc.y = 0.0;
-		} else {
-			acc.y = 1.0;
-		}
-		if (acc.z < 0.2) {
-			acc.z = 0.0;
-		} else {
-			acc.z = 1.0;
-		}
+//		if (acc.x < 0.2) {
+//			acc.x = 0.0;
+//		} else {
+//			acc.x = 1.0;
+//		}
+//		if (acc.y < 0.2) {
+//			acc.y = 0.0;
+//		} else {
+//			acc.y = 1.0;
+//		}
+//		if (acc.z < 0.2) {
+//			acc.z = 0.0;
+//		} else {
+//			acc.z = 1.0;
+//		}
 
 		gl_FragColor = vec4(acc, 1.0);
 	}
@@ -117,7 +116,6 @@
 
 
 	var texture1 = new THREE.TextureLoader().load( 'image.png' );
-	var texture2 = new THREE.TextureLoader().load( 'texture2.png' );
 
 	var mouseX = 0.0;
 	var mouseY = 0.0;
@@ -171,8 +169,6 @@
 		// materials (ie, linking to the shader program)
 		var uniforms = {
 			t1: { type: "t", value: texture1  },
-			t2: { type: "t", value: texture2  },
-			mixVal: {type: "f", value: 0.0},
 			pxStep: {type: "f", value: 1.0/512.0}
 		};
 	
@@ -216,11 +212,6 @@
 	function render() {
 
 		var time = performance.now();
-
-		mesh.material.uniforms.mixVal.value = mouseX;
-
-		//mesh.rotation.z = time * 0.0005;
-
 		renderer.render( scene, camera );
 	}
 
