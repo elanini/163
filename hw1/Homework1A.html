@@ -16,6 +16,72 @@
 <div id="container"></div>
 
 <script src="js/three.js"></script>
+<script id="gouradVS" type="x-shader/x-vertex">
+	uniform mat4 modelMatrix;
+	uniform mat4 viewMatrix;
+      	uniform mat4 projectionMatrix;
+
+     	attribute vec3 position;
+	attribute vec3 normal;
+
+	uniform vec3 light_pos;
+	float spec_intensity = 32.0;
+	uniform vec3 light_diffuse;
+	uniform vec3 light_specular;
+	uniform vec3 ambient;
+	varying vec4 fcolor;
+	vec3 V, N, L;
+
+	void main() {
+		//get the vertex position in CAMERA coordinates
+		vec4 position = viewMatrix * modelMatrix * vec4(position, 1.0);
+
+		//use xyz vals to calculate vectors between vertex, light, and camera
+		vec3 P = position.xyz;
+    
+		//get the normalized vertex normal in CAMERA coordinates
+		N = vec3(normalize(viewMatrix * modelMatrix * vec4(normal.xyz, 0.0)  ).xyz) ;
+    
+		//the lights positions are defined in WORLD coordinates, we want to put them in CAMERA coordinates too
+		vec4 L_cam = viewMatrix * vec4(light_pos, 1.0);
+    
+		//get the normalized vectors from each light position to the vertex positions
+		L = vec3(normalize(L_cam - position).xyz);
+    
+    
+		//reverse direction of position vector to get view vector from vertex to camera
+		V = normalize(-P);
+
+
+		vec4 outColor1 = vec4(0.0);
+	
+		float diff1 = max(0.0, dot(N, L)); 
+		vec3 color1 = diff1 * light_diffuse;
+	
+		vec3 R1 = normalize(reflect(-L,N)); 
+		float spec1 = pow( max(dot(R1, V), 0.0), spec_intensity);
+	
+		color1 += spec1 * light_specular;
+		if (spec1 > 1.0) {
+	  		outColor1 = vec4(light_specular,1.0);
+		} else {
+	  		outColor1 = clamp(vec4(color1,1.0), 0.0,1.0);
+		}
+	
+		fcolor =  clamp(vec4(ambient, 1.0) + outColor1, 0.0, 1.0);
+
+		gl_Position = projectionMatrix * position; 
+	}
+
+</script>
+
+<script id="gouradFS" type="x-shader/x-fragment">
+	precision mediump float;
+	varying vec4 fcolor;
+	void main() {
+		gl_FragColor = fcolor;
+	}
+</script>
 <script id="texVS" type="x-shader/x-vertex">
 	uniform mat4 modelMatrix;
 	uniform mat4 viewMatrix;
@@ -23,34 +89,33 @@
 
      	attribute vec3 position;
 	attribute vec3 normal;
-	attribute vec2 uv;
 
 	uniform vec3 light_pos;
 
 	//We are explicitly passing these in
-	varying vec2 vUv;
+	varying vec2 pos;
 	varying vec3 N, L, V;
 
 	void main() {
-		vUv = uv;
 		//get the vertex position in CAMERA coordinates
 		vec4 position = viewMatrix * modelMatrix * vec4(position, 1.0);
 
-//		//use xyz vals to calculate vectors between vertex, light, and camera
-//		vec3 P = position.xyz;
-//    
-//		//get the normalized vertex normal in CAMERA coordinates
-//		N = vec3(normalize(viewMatrix * modelMatrix * vec4(normal.xyz, 0.0)  ).xyz) ;
-//    
-//		//the lights positions are defined in WORLD coordinates, we want to put them in CAMERA coordinates too
-//		vec4 L_cam = viewMatrix * vec4(light_pos, 1.0);
-//    
-//		//get the normalized vectors from each light position to the vertex positions
-//		L = vec3(normalize(L_cam - position).xyz);
-//    
-//    
-//		//reverse direction of position vector to get view vector from vertex to camera
-//		V = normalize(-P);
+		//use xyz vals to calculate vectors between vertex, light, and camera
+		vec3 P = position.xyz;
+    
+		//get the normalized vertex normal in CAMERA coordinates
+		N = vec3(normalize(viewMatrix * modelMatrix * vec4(normal.xyz, 0.0)  ).xyz) ;
+    
+		//the lights positions are defined in WORLD coordinates, we want to put them in CAMERA coordinates too
+		vec4 L_cam = viewMatrix * vec4(light_pos, 1.0);
+    
+		//get the normalized vectors from each light position to the vertex positions
+		L = vec3(normalize(L_cam - position).xyz);
+    
+    
+		//reverse direction of position vector to get view vector from vertex to camera
+		V = normalize(-P);
+		pos = position.xy;
 
 		gl_Position = projectionMatrix * position; 
 	}
@@ -58,9 +123,31 @@
 <script id="texFS" type="x-shader/x-fragment">
 	precision mediump float;
 	uniform sampler2D tex;
-	varying vec2 vUv;
+	varying vec2 pos;
+	varying vec3 V, N, L;
+	float spec_intensity = 32.0;
+	uniform vec3 light_diffuse;
+	uniform vec3 light_specular;
+	uniform vec3 ambient;
 	void main() {
-		gl_FragColor = texture2D(tex, vUv);
+		vec4 outColor1 = vec4(0.0);
+	
+		//diffuse light depends on the angle between the light and the vertex normal
+		float diff1 = max(0.0, dot(N, L)); //just to make sure not negative
+		vec3 color1 = diff1 * light_diffuse;
+	
+		//specular highlights depend upon the position/orientation of the camera and the direction of the light reflecting off of this geometry
+		vec3 R1 = normalize(reflect(-L,N)); //get light vector reflected across the plane defined by the normal of this geometry
+		float spec1 = pow( max(dot(R1, V), 0.0), spec_intensity); //raising the value to a particular intensity value shrinks the size of the specular highlight so that only a reflection vector (R1) that is very close to the view vector (V) will be applied to this fragment.
+	
+		color1 += spec1 * light_specular;
+		if (spec1 > 1.0) {
+	  		outColor1 = vec4(light_specular,1.0);
+		} else {
+	  		outColor1 = clamp(vec4(color1,1.0), 0.0,1.0);
+		}
+	
+		gl_FragColor =  clamp(vec4(ambient, 1.0) + outColor1 + texture2D(tex, pos), 0.0, 1.0);
 	}
 </script>
 
@@ -182,9 +269,13 @@
       	var fs = document.getElementById( 'fragmentShader' ).textContent;
 	var texVS = document.getElementById('texVS').textContent;
 	var texFS = document.getElementById('texFS').textContent;
+	var gouradVS = document.getElementById('gouradVS').textContent;
+	var gouradFS = document.getElementById('gouradFS').textContent;
 
 	var mesh1, mesh2, mesh3;
-	var material, tex_material;
+	var material, tex_material, gourad_material;
+	
+	var light1_pos, light2_pos, light3_pos;
 
 	init();
 	animate();
@@ -202,24 +293,42 @@
 		// lights
 		var ambient = new THREE.Vector3(0.1,0.1,0.1);
 
-		var light1_pos = new THREE.Vector3(0.0,10.0,0.0); //from above
+		light1_pos = new THREE.Vector3(0.0,10.0,0.0); //from above
 		var light1_diffuse = new THREE.Vector3(1.0,0.0,0.0);
 		var light1_specular = new THREE.Vector3(1.0,1.0,1.0);
 	
-		var light2_pos = new THREE.Vector3(-10.0,0.0,0.0); //from the left
-		var light2_diffuse = new THREE.Vector3(0.0,0.0,1.0);
-		var light2_specular = new THREE.Vector3(1.0,1.0,1.0);
+		light2_pos = new THREE.Vector3(10.0,0.0,0.0); //from the right
+		var light2_diffuse = new THREE.Vector3(0.10,0.10,0.10);
+		var light2_specular = new THREE.Vector3(0.0,1.0,0.0);
+		
+		light3_pos = new THREE.Vector3(10.0, 10.0, 0.0);
+		var light3_diffuse = new THREE.Vector3(1.0, 0.0, 0.0);
+		var light3_specular = new THREE.Vector3(1.0, 1.0, 0.0);
 
 
 		// geometry
 
-		var geometry1 = new THREE.SphereGeometry( 1, 64, 64 );
-		var geometry2 = new THREE.BoxGeometry( 1, 1, 1 );
+		var geometry1 = new THREE.IcosahedronGeometry(1, 0);
+		var geometry2 = new THREE.CylinderGeometry( 0.6, 0.6, 1.2, 12 );
 		var geometry3 = new THREE.TorusKnotGeometry( 1, 0.1, 100, 16 );
 
 		// materials (ie, linking to the shader program)
+		var tex = THREE.ImageUtils.loadTexture("texture1.png")
+		tex.wrapS = THREE.RepeatWrapping;
+		tex.wrapT = THREE.RepeatWrapping;
 		var tex_uniforms = {
-			tex: {type: "t", value: THREE.ImageUtils.loadTexture("texture1.png")}
+	    		ambient: { type: "v3", value: ambient },
+			tex: {type: "t", value: tex},
+			light_pos: {type: "v3", value: light3_pos},
+	    		light_diffuse: { type: "v3", value: light3_diffuse },
+	    		light_specular:  { type: "v3", value: light3_specular },
+		}
+
+		var gourad_uniforms = {
+	    		ambient: { type: "v3", value: ambient },
+			light_pos: {type: "v3", value: light2_pos},
+	    		light_diffuse: { type: "v3", value: light2_diffuse },
+	    		light_specular:  { type: "v3", value: light2_specular },
 		}
 
 	  	var uniforms =  {
@@ -244,6 +353,12 @@
 			fragmentShader: texFS
 		});
 
+		gourad_material = new THREE.RawShaderMaterial({
+			uniforms: gourad_uniforms,
+			vertexShader: gouradVS,
+			fragmentShader: gouradFS
+		});
+
 
 
 		mesh1 = new THREE.Mesh( geometry1, material );
@@ -251,7 +366,7 @@
 		scene.add( mesh1 );
 
 	
-	      	mesh2 = new THREE.Mesh( geometry2, material );
+	      	mesh2 = new THREE.Mesh( geometry2, gourad_material );
 		mesh2.translateX(0.0);
 		scene.add( mesh2 );
 
@@ -282,11 +397,21 @@
 	function render() {
 
 		var time = performance.now();
-
+		mesh1.rotation.x = time * 0.0005;
+		mesh1.rotation.y = time * 0.0005;
 		mesh2.rotation.x = time * 0.00005;
 		mesh2.rotation.y = time * 0.0005;
-
 		mesh3.rotation.x = time * 0.0009;
+
+		let light1_axis = new THREE.Vector3(0.0, 0.0, 1.0);
+		let light2_axis = new THREE.Vector3(0.0, 1.0, 0.0);
+		let light3_axis = new THREE.Vector3(-1.0, 1.0, 0.0).normalize();
+		let rotation = 0.005;
+		material.uniforms.light1_pos.value.applyAxisAngle(light1_axis, rotation)
+		material.uniforms.light2_pos.value.applyAxisAngle(light2_axis, rotation)	
+		tex_material.uniforms.light_pos.value.applyAxisAngle(light3_axis, rotation)
+		gourad_material.uniforms.light_pos.value.applyAxisAngle(light2_axis, rotation)
+		
 
 		//if I want to update the lights, I acutally have to update the material used by each object in the scene. 
 		//material.uniforms.light1_diffuse.value = new THREE.Vector3(0.0,1.0,0.0);
