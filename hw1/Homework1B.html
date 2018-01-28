@@ -57,6 +57,8 @@
 	//changing value - we are using this to mix between the two textures
 	uniform float pxStep;
 
+	uniform float mixVal;
+
 	//this has to have the same name as in the vertex shader. Here, in the fragment shader, we interpolate across the textureCoordinates
 	varying vec2 UV;
 
@@ -80,23 +82,8 @@
 		acc -= g;
 		acc -= h;
 		acc -= i;
-//		if (acc.x < 0.2) {
-//			acc.x = 0.0;
-//		} else {
-//			acc.x = 1.0;
-//		}
-//		if (acc.y < 0.2) {
-//			acc.y = 0.0;
-//		} else {
-//			acc.y = 1.0;
-//		}
-//		if (acc.z < 0.2) {
-//			acc.z = 0.0;
-//		} else {
-//			acc.z = 1.0;
-//		}
 
-		gl_FragColor = vec4(acc, 1.0);
+		gl_FragColor = mix(texture2D(t1, UV), vec4(acc, 1.0), mixVal);
 	}
 
 	</script>
@@ -169,7 +156,8 @@
 		// materials (ie, linking to the shader program)
 		var uniforms = {
 			t1: { type: "t", value: texture1  },
-			pxStep: {type: "f", value: 1.0/512.0}
+			pxStep: {type: "f", value: 1.0/512.0},
+			mixVal: {type: "f", value: 1.0}
 		};
 	
 
@@ -193,7 +181,7 @@
 
 
 		//make it so that resizing the browser window also resizes the scene
-        	window.addEventListener( 'resize', onWindowResize, false );
+		window.addEventListener( 'resize', onWindowResize, false );
 		document.addEventListener('mousemove', onDocumentMouseMove, false);
 		
 	}
@@ -203,15 +191,13 @@
 
 
 	function animate() {
-
 		requestAnimationFrame( animate );
 		render();
-
 	}
 
 	function render() {
-
 		var time = performance.now();
+		material.uniforms.mixVal.value = mouseX;
 		renderer.render( scene, camera );
 	}
 
@@ -223,12 +209,9 @@
 
 
 	function onWindowResize( event ) {
-
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
-
 		renderer.setSize( window.innerWidth, window.innerHeight );
-
 	}
 
 
