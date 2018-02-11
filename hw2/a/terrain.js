@@ -34,14 +34,15 @@ varying vec2 vUv;
 varying float vDisplace; 
 
 void main() {
-    vec4 sand = texture2D(tSand, vUv);
-    vec4 rock = texture2D(tRock, vUv);
-
-    float zOffset = vDisplace;
+    vec4 sand = texture2D(tSand, vUv * 10.0);
+    vec4 rock = texture2D(tRock, vUv * 2.0);
+    float cutoff = 0.17;
+    float interv = 0.1;
+    float zOffset = vDisplace/50.0;
     float mixval = 0.0;
-    if (vDisplace > 0.15 && vDisplace < 0.25) {
-        mixval = (vDisplace - 0.15) * 10.0;
-    } else if (vDisplace > 0.25) {
+    if (zOffset > cutoff && zOffset < cutoff + interv) {
+        mixval = (zOffset - cutoff) * 10.0;
+    } else if (zOffset > cutoff + interv) {
         mixval = 1.0;
     }
 
@@ -53,13 +54,20 @@ void main() {
 
 
 function generate_terrain_mesh() {
-    let heightTexture = new THREE.TextureLoader().load('height4.png');
-    let sandTexture = new THREE.TextureLoader().load('sand.jpg');
-    let rockTexture = new THREE.TextureLoader().load('rock.jpg');
+    let heightTexture = new THREE.TextureLoader().load('img/height5.png');
+    let sandTexture = new THREE.TextureLoader().load('img/sand.jpg');
+    sandTexture.wrapS = THREE.RepeatWrapping;
+    sandTexture.wrapT = THREE.RepeatWrapping;
+    sandTexture.repeat.set( 40, 40 );
+    let rockTexture = new THREE.TextureLoader().load('img/rock.jpg');
+    rockTexture.wrapS = THREE.RepeatWrapping;
+    rockTexture.wrapT = THREE.RepeatWrapping;
+    rockTexture.repeat.set( 40, 40 );
 
-    let geometry = new THREE.PlaneGeometry(5,5,300,300);
+
+    let geometry = new THREE.PlaneGeometry(512,512,300,300);
     let uniforms = {
-        displaceAmt: { type: "f", value: 1.0 },
+        displaceAmt: { type: "f", value: 50.0 },
         tPic:  { type: "t", value: heightTexture },
         tSand: { type: "t", value: sandTexture },
         tRock: { type: "t", value: rockTexture }

@@ -7,14 +7,19 @@ function init() {
 
     container = document.getElementById('container');
     console.log(container)
-    camera = new THREE.PerspectiveCamera(60.0, window.innerWidth / window.innerHeight, 0.1, 50);
-    camera.position.z = 5;
+    camera = new THREE.PerspectiveCamera(60.0, window.innerWidth / window.innerHeight, 1, 2000);
+    camera.position.y = 40;
+    camera.position.z = 300;
 
     scene = new THREE.Scene();
 
 
     let terrain_mesh = generate_terrain_mesh();
-    terrain_mesh.rotateX(-Math.PI/3);
+    terrain_mesh.rotateX(-Math.PI/2);
+
+    let skybox_mesh = generate_skybox_mesh();
+
+    scene.add(skybox_mesh);
     scene.add(terrain_mesh);
 
     renderer = new THREE.WebGLRenderer();
