@@ -17,10 +17,16 @@ function init() {
     let terrain_mesh = generate_terrain_mesh();
     terrain_mesh.rotateX(-Math.PI/2);
 
-    let skybox_mesh = generate_skybox_mesh();
+    let {mesh: skybox_mesh, cubeMap} = generate_skybox_mesh();
+    console.log(cubeMap)
+
+    let water_mesh = generate_water_mesh(cubeMap);
+    water_mesh.rotateX(-Math.PI/2);
+    water_mesh.translateZ(9.0);
 
     scene.add(skybox_mesh);
     scene.add(terrain_mesh);
+    scene.add(water_mesh);
 
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0x999999);

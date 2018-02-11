@@ -52,5 +52,5 @@ function generate_skybox_mesh() {
     
     let geometry = new THREE.BoxGeometry( 2000, 2000, 2000 );
     let mesh = new THREE.Mesh(geometry, material);
-    return mesh;
+    return { mesh, cubeMap };
 }
