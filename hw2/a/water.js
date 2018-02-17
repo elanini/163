@@ -32,7 +32,7 @@ varying vec3 vI, vWorldNormal;
 void main() {
     vec3 reflection = reflect( vI, vWorldNormal );
     vec4 envColor = textureCube( envMap, vec3( -reflection.x, reflection.yz ) );
-    gl_FragColor = vec4(envColor);
+    gl_FragColor = vec4(envColor.rgb, 0.8);
 }`;
 
 function generate_water_mesh(cubeMap) {
@@ -45,6 +45,7 @@ function generate_water_mesh(cubeMap) {
         vertexShader: WATER_VS,
         fragmentShader: WATER_FS
     })
+    material.transparent = true;
     let mesh = new THREE.Mesh(geometry, material);
     return mesh;
 }

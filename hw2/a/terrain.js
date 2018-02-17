@@ -65,7 +65,7 @@ function generate_terrain_mesh() {
     rockTexture.repeat.set( 40, 40 );
 
 
-    let geometry = new THREE.PlaneGeometry(512,512,300,300);
+    let geometry = new THREE.PlaneGeometry(512,512,512,512);
     let uniforms = {
         displaceAmt: { type: "f", value: 50.0 },
         tPic:  { type: "t", value: heightTexture },
