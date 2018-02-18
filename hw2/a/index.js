@@ -2,6 +2,7 @@ var container;
 
 var camera, scene, renderer;
 var options;
+var tick = 0;
 
 var terrain_mesh, water_mesh;
 function init() {
@@ -63,9 +64,10 @@ function animate() {
 }
 
 function render() {
-
+    tick += 0.01;
     terrain_mesh.material.uniforms.displaceAmt.value = options.displaceAmt;
     water_mesh.material.uniforms.waterAlpha.value = options.waterAlpha;
+    water_mesh.material.uniforms.tick.value = tick;
 
     //if I want to update the lights, I acutally have to update the material used by each object in the scene. 
     //material.uniforms.light1_diffuse.value = new THREE.Vector3(0.0,1.0,0.0);

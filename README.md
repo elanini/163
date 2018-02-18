@@ -16,7 +16,7 @@ I used the "Diamond Cycles" cyclic cellular automata with 14 colors.
 
 ## Homework 2
 * [Part A](hw2/a/README.md)
-I used an image to heightmap a terrain. Brought in the skybox, and a place for the water with reflection of the skybox. I have dat.gui controlling water alpha and displacement amount. Used OrbitControls for controlling the camera.
+I used an image to heightmap a terrain. Brought in the skybox, and a place for the water with reflection of the skybox. I used the snoise function from the repo linked in part b to add a fun effect to the water. I have dat.gui controlling water alpha and displacement amount. Used OrbitControls for controlling the camera.
 
 * [Part B](hw2/b/README.md)
 I used a fire sprite with GPUParticleSystem for fire. I used snoise from the linked repo for something like water. I have the default particle generator controls as well as changing how much the UV coords are multiplied by and the mixvalue for the water color vs the noise. 
