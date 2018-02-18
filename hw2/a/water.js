@@ -26,19 +26,21 @@ const WATER_FS = `
 precision mediump float;
 
 uniform samplerCube envMap;
+uniform float waterAlpha;
 
 varying vec3 vI, vWorldNormal;
 
 void main() {
     vec3 reflection = reflect( vI, vWorldNormal );
-    vec4 envColor = textureCube( envMap, vec3( -reflection.x, reflection.yz ) );
-    gl_FragColor = vec4(envColor.rgb, 0.8);
+    vec4 envColor = textureCube( envMap, vec3( reflection.x, reflection.yz ) );
+    gl_FragColor = vec4(envColor.rgb, waterAlpha);
 }`;
 
 function generate_water_mesh(cubeMap) {
     let geometry = new THREE.PlaneGeometry(2000, 2000, 1, 1);
     let uniforms = {
-        tCube: { type: "t", value: cubeMap }
+        tCube: { type: "t", value: cubeMap },
+        waterAlpha: {type: "f", value: 0.8}
     };
     let material = new THREE.RawShaderMaterial({
         uniforms: uniforms,
