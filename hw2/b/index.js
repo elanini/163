@@ -4,7 +4,7 @@ var camera, scene, renderer;
 var options, spawnerOptions;
 var clock = new THREE.Clock(), tick = 0;
 var particleSystem;
-
+var cell;
 
 function init() {
     let gui = new dat.GUI({width: 300})
@@ -34,6 +34,10 @@ function init() {
         timeScale: 1
     };
 
+    waterOptions = {
+        mixVal: 0.8,
+        uvAdjustment: 850.0
+    };
 
     scene = new THREE.Scene();
 
@@ -43,7 +47,9 @@ function init() {
     } );
 
 
-    // scene.add(particleSystem);
+    scene.add(particleSystem);
+    gui.add(waterOptions, "mixVal", 0.0, 1.0);
+    gui.add(waterOptions, "uvAdjustment", 1.0, 1000.0);
 
     gui.add( options, "velocityRandomness", 0, 3 );
     gui.add( options, "positionRandomness", 0, 3 );
@@ -57,7 +63,7 @@ function init() {
     gui.add( spawnerOptions, "spawnRate", 10, 30000 );
     gui.add( spawnerOptions, "timeScale", -1, 1 );
 
-    let cell = generate_cell_mesh();
+    cell = generate_cell_mesh();
     cell.rotateZ(-Math.PI/3);
     // cell.translateZ(9.0);
     scene.add(cell)
@@ -105,6 +111,9 @@ function animate() {
 
     }
     particleSystem.update( tick );
+    cell.material.uniforms.time.value = tick;
+    cell.material.uniforms.mixVal.value = waterOptions.mixVal;
+    cell.material.uniforms.uvAdjustment.value = waterOptions.uvAdjustment;
 
     render();
 
