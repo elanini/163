@@ -43,7 +43,7 @@ function init() {
     } );
 
 
-    scene.add(particleSystem);
+    // scene.add(particleSystem);
 
     gui.add( options, "velocityRandomness", 0, 3 );
     gui.add( options, "positionRandomness", 0, 3 );
@@ -57,6 +57,10 @@ function init() {
     gui.add( spawnerOptions, "spawnRate", 10, 30000 );
     gui.add( spawnerOptions, "timeScale", -1, 1 );
 
+    let cell = generate_cell_mesh();
+    cell.rotateZ(-Math.PI/3);
+    // cell.translateZ(9.0);
+    scene.add(cell)
 
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
