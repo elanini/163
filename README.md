@@ -20,3 +20,8 @@ I used an image to heightmap a terrain. Brought in the skybox, and a plane for t
 
 * [Part B](hw2/b/README_B.md)
 I used a fire sprite with GPUParticleSystem for fire. I used snoise from the linked repo for something like water. I have the default particle generator controls as well as changing how much the UV coords are multiplied by and the mixvalue for the water color vs the noise. 
+
+## Homework 3
+* [Part B](hw3/b/README_B.md)
+I used functions from the [Jamie Wong article](http://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/) and SDFs and mixing functions from [here](http://iquilezles.org/www/articles/distfunctions/distfunctions.htm). I have a cube and a torus being rotated and smoothly mixed together and gradually goes to a cube rotating, with a simple red color. I have the cylinder textured using trigonometric equations and the point in object coordinates that the ray hits the cylinder. I did limit the size of the canvas to 640x640. 
+* [Part c](hw3/c/README_C.md)
