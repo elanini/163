@@ -10,11 +10,15 @@ function animate(state) {
     state.plane.material.uniforms.tick.value += 0.01;
 }
 
-function generate_plane() {
+function generate_plane(container) {
     let geometry = new THREE.PlaneGeometry(640, 640, 1, 1, 1);
+    let checkertex = new THREE.TextureLoader().load('texture1.png');
+    checkertex.wrapS = THREE.RepeatWrapping;
+    checkertex.wrapT = THREE.RepeatWrapping;
     let uniforms = {
         tick: {type: "f", value: 0},
-        resolution: {type: "v2", value: new THREE.Vector2(640, 640)}
+        resolution: {type: "v2", value: new THREE.Vector2(container.width, container.height)},
+        texture: {type: "t", value: checkertex}
     };
     let material = new THREE.RawShaderMaterial({
         uniforms: uniforms,
@@ -47,7 +51,7 @@ function init() {
     renderer.setClearColor(new THREE.Color(0x000000), 1)
     container.appendChild( renderer.domElement );
 
-    let plane = generate_plane();
+    let plane = generate_plane(renderer.domElement);
     scene.add(plane);
 
     let state = {camera, scene, renderer, container, plane};
