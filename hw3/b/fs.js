@@ -66,12 +66,6 @@ float sdBox( vec3 p, vec3 b ) {
   vec3 d = abs(p) - b;
   return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));
 }
-//http://www.iquilezles.org/www/articles/smin/smin.htm
-float smin( float a, float b, float k )
-{
-    float res = exp( -k*a ) + exp( -k*b );
-    return -log( res )/k;
-}
 float sphereRepeat( vec3 p, vec3 c ) {
     vec3 q = mod(p,c)-0.5*c;
     return sphereSDF( q );
@@ -80,13 +74,15 @@ float sdCappedCylinder( vec3 p, vec2 h ) {
   vec2 d = abs(vec2(length(p.xz),p.y)) - h;
   return min(max(d.x,d.y),0.0) + length(max(d,0.0));
 }
-/**
- * Signed distance function describing the scene.
- * 
- * Absolute value of the return value indicates the distance to the surface.
- * Sign indicates whether the point is inside or outside the surface,
- * negative indicating inside.
- */
+//http://www.iquilezles.org/www/articles/smin/smin.htm
+float smin( float a, float b, float k )
+{
+    float res = exp( -k*a ) + exp( -k*b );
+    return -log( res )/k;
+}
+
+// returns the distance
+// if the point hit was the cylinder, also return the transformed hit point on the cylinder
 vec4 sceneSDF(vec3 samplePoint) {
     vec3 translatedSample = samplePoint - vec3(0.45, 0.45, -0.5);
     // one set of objects, morph to newbox
@@ -113,6 +109,7 @@ vec4 sceneSDF(vec3 samplePoint) {
 }
 
 
+// http://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/#rotation-and-translation
 vec3 estimateNormal(vec3 p) {
     return normalize(vec3(
         sceneSDF(vec3(p.x + EPSILON, p.y, p.z)).x - sceneSDF(vec3(p.x - EPSILON, p.y, p.z)).x,
@@ -120,16 +117,8 @@ vec3 estimateNormal(vec3 p) {
         sceneSDF(vec3(p.x, p.y, p.z  + EPSILON)).x - sceneSDF(vec3(p.x, p.y, p.z - EPSILON)).x
     ));
 }
-/**
- * Return the shortest distance from the eyepoint to the scene surface along
- * the marching direction. If no part of the surface is found between start and end,
- * return end.
- * 
- * eye: the eye point, acting as the origin of the ray
- * marchingDirection: the normalized direction to march in
- * start: the starting distance away from the eye
- * end: the max distance away from the ey to march before giving up
- */
+
+// http://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/#rotation-and-translation
 vec4 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, float end) {
     float depth = start;
     vec3 objectPoint;
@@ -148,13 +137,7 @@ vec4 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, fl
 }
             
 
-/**
- * Return the normalized direction to march in from the eye point for a single pixel.
- * 
- * fieldOfView: vertical field of view in degrees
- * size: resolution of the output image
- * fragCoord: the x,y coordinate of the pixel in the output image
- */
+// http://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/#rotation-and-translation
 vec3 rayDirection(float fieldOfView, vec2 size) {
     vec2 xy = gl_FragCoord.xy - size / 2.0;
     float z = size.y / tan(radians(fieldOfView) / 2.0);
@@ -167,6 +150,7 @@ void main() {
     vec3 eye = vec3(0.0, 0.0, 5.0);
     vec4 result = shortestDistanceToSurface(eye, dir, MIN_DIST, MAX_DIST);
     float dist = result.x;
+    // use transformed object hit point for texture positioning if its the cylinder
     vec3 objectPoint = result.yzw;
     
     if (dist > MAX_DIST - EPSILON) {
@@ -177,11 +161,17 @@ void main() {
 
     vec3 Kd;
 
-    if (objectPoint.x < -0.5 && objectPoint.y < -0.5 && objectPoint.z < -0.5) {
+    // kd is red for other object
+    if (objectPoint.x < -0.9 && objectPoint.y < -0.9 && objectPoint.z < -0.9) {
         Kd = vec3(1.0, 0.0, 0.0);
     } else {
+        // y controls height, from the bottom face to the top face of the cyl
+        // if y is at 0.25, we are on the top or bottom of the cylinder
+        // so use x and z for indexing, because those do change at the top and bottom
+        // otherwise, we want the texture to wrap around the cylinder
+        // which means we want atan2 which gives us the angle of x and z on 
+        // the circle at this height in the cylinder
         float pi = 3.14159265;
-        float pi_over_two = 3.14159265 / 2.0;
         float u = (atan(objectPoint.x, objectPoint.z));
         Kd = texture2D(texture, vec2((u / pi) + 0.5, objectPoint.y)).rgb;
         if (abs(objectPoint.y) - 0.25 > -EPSILON) {
