@@ -10,11 +10,9 @@ function init() {
     let gui = new dat.GUI({width: 300})
     container = document.getElementById('container');
     console.log(container)
-    camera = new THREE.PerspectiveCamera(60.0, window.innerWidth / window.innerHeight, 1, 2000);
-    var controls = new THREE.OrbitControls( camera );
-    camera.position.y = 40;
-    camera.position.z = 300;
-    controls.update()
+    let width = 1024
+    let height = 1024
+    camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, 1, 1000 );
 
     scene = new THREE.Scene();
 
@@ -36,7 +34,7 @@ function init() {
 
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0x999999);
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(2048, 2048);
     container.appendChild(renderer.domElement);
 
 

@@ -70,13 +70,14 @@ void main() {
     vec3 newPosition = (position.xyz + normal.xyz * displaceAmt);
     vUv = uv;
 
-    gl_Position = projectionMatrix  * viewMatrix * modelMatrix  * vec4( newPosition, 1.0 );
+    gl_Position = vec4( uv*2.0 - 1.0, 0.0, 1.0 );
 }`;
   
 const WATER_FS = `
 precision highp float;
 varying vec2 vUv;
 uniform float tick;
+uniform sampler2D heightmap;
 #define OCTAVES   		5		// 7
 
 vec2 hash( vec2 p ){
@@ -133,7 +134,7 @@ float fbm5( vec2 p , float time){
 	float m = 0.0;
 	float a = 0.5;
 	
-	for( int i=0; i<5; i++ ){
+	for( int i=0; i<15; i++ ){
 		s += a * voronoi(p, time);
 		m += a;
 		a *= 0.5;
@@ -141,8 +142,78 @@ float fbm5( vec2 p , float time){
 	}
 	return pow(s/m, 2.0);
 }
+
+vec3 pos_for_uv(vec2 uv) {
+	float height = texture2D(heightmap, uv).r;
+	return vec3(uv.x, uv.y, height);
+}
+
+vec3 diff_for_uv(vec2 uv, vec3 pos2) {
+	return  pos_for_uv(uv)- pos2;
+}
+
+
+vec3 get_normal(vec3 a, vec3 b) {
+	return cross(normalize(a), normalize(b));
+}
+
 uniform int fakeShadow;
 void main() {
+	float pxStep = 1.0/2048.0;
+	vec3 p   = pos_for_uv(vUv);
+
+	vec3 avgnorm = vec3(0.0);
+	vec3 Np  = diff_for_uv(vec2(vUv.x + pxStep, vUv.y), p);
+	vec3 NEp = diff_for_uv(vec2(vUv.x + pxStep, vUv.y + pxStep), p);
+	vec3 Ep  = diff_for_uv(vec2(vUv.x, vUv.y + pxStep), p);
+	vec3 SEp = diff_for_uv(vec2(vUv.x - pxStep, vUv.y + pxStep), p);
+	vec3 Sp  = diff_for_uv(vec2(vUv.x - pxStep, vUv.y), p);
+	vec3 SWp = diff_for_uv(vec2(vUv.x - pxStep, vUv.y - pxStep), p);
+	vec3 Wp  = diff_for_uv(vec2(vUv.x, vUv.y - pxStep), p);
+	vec3 NWp = diff_for_uv(vec2(vUv.x + pxStep, vUv.y - pxStep), p);
+
+
+
+	avgnorm += get_normal(Np, NEp);	
+	avgnorm += get_normal(NEp, Ep);	
+	avgnorm += get_normal(Ep, SEp);	
+	avgnorm += get_normal(SEp, Sp);	
+	avgnorm += get_normal(Sp, SWp);	
+	avgnorm += get_normal(SWp, Wp);	
+	avgnorm += get_normal(Wp, NWp);	
+	avgnorm += get_normal(NWp, Np);	
+	avgnorm += get_normal(Np, Ep);	
+	avgnorm += get_normal(Ep, Sp);	
+	avgnorm += get_normal(Sp, Wp);	
+	avgnorm += get_normal(Wp, Np);	
+	avgnorm = normalize(avgnorm);
+	
+
+	gl_FragColor = vec4((avgnorm + 1.0) / 2.0, 1.0);
+}`;
+
+
+
+function generate_water_mesh() {
+	let geometry = new THREE.PlaneGeometry(2048, 2048, 1, 1);
+	let t = new THREE.TextureLoader().load('heightmap.png');
+	t.magFilter = THREE.NearestFilter
+	console.log(t)
+    let uniforms = {
+        tick: {type: "f", value: 0},
+		fakeShadow: {type: "i", value: 1},
+		heightmap: {type: "t", value: t}
+	};
+    let material = new THREE.RawShaderMaterial({
+        uniforms: uniforms,
+        vertexShader: WATER_VS,
+        fragmentShader: WATER_FS
+	})
+	let mesh = new THREE.Mesh(geometry, material);
+    return mesh;
+}
+
+/*
 	vec2 adjUv = vUv * 5.0 - 0.5;
     float noiseval = fbm5(adjUv, 100.0);
     float above = fbm5(vec2(adjUv.x + 0.0001, adjUv.y), 100.0);
@@ -184,22 +255,5 @@ void main() {
 	}
     // vec3 reflectionDirection = normalize(reflect(-L, N));
     float specularWeight = 0.0;
-    vec3 color = (Kd * lightColor * diffuseWeight) + (Ks * lightColor * specularWeight) + (Ka * lightColor);
-    gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
-	// gl_FragColor = vec4(N, 1.0);
-}`;
-
-function generate_water_mesh() {
-    let geometry = new THREE.PlaneGeometry(300, 300, 150, 150);
-    let uniforms = {
-        tick: {type: "f", value: 0},
-		fakeShadow: {type: "i", value: 1}
-    };
-    let material = new THREE.RawShaderMaterial({
-        uniforms: uniforms,
-        vertexShader: WATER_VS,
-        fragmentShader: WATER_FS
-    })
-    let mesh = new THREE.Mesh(geometry, material);
-    return mesh;
-}
+	vec3 color = (Kd * lightColor * diffuseWeight) + (Ks * lightColor * specularWeight) + (Ka * lightColor);
+	*/
