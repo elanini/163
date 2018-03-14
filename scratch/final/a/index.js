@@ -12,7 +12,11 @@ function init() {
     console.log(container)
     let width = 1024
     let height = 1024
-    camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, 1, 1000 );
+    camera = new THREE.PerspectiveCamera( 45, width / height, 1, 2000 );
+    var controls = new THREE.OrbitControls(camera)
+    camera.position.z = 100;
+    camera.position.y = 40;
+    controls.update()
 
     scene = new THREE.Scene();
 
@@ -34,7 +38,7 @@ function init() {
 
     renderer = new THREE.WebGLRenderer({preserveDrawingBuffer: true});
     renderer.setClearColor(0x999999);
-    renderer.setSize(2048, 2048);
+    renderer.setSize(1024, 1024);
     container.appendChild(renderer.domElement);
 
 

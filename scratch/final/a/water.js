@@ -11,204 +11,93 @@ uniform float tick;
 
 varying vec2 vUv;
 
-//	https://www.shadertoy.com/view/lsjGWD
-//	by Pietro De Nicola
-//
-#define OCTAVES   		2		// 7
-
-vec2 hash( vec2 p ){
-	p = vec2( dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3)));
-	return fract(sin(p)*43758.5453);
-}
-
-float voronoi( vec2 x , float time){
-	vec2 n = floor( x );
-	vec2 f = fract( x );
-	
-	float F1 = 8.0;
-	float F2 = 8.0;
-	
-	for( int j=-1; j<=1; j++ )
-		for( int i=-1; i<=1; i++ ){
-			vec2 g = vec2(i,j);
-			vec2 o = hash( n + g );
-
-			o = 0.5 + 0.41*sin( time + 6.2831*o );	
-			vec2 r = g - f + o;
-
-		float d = 	 dot(r,r)  ;
-
-		if( d<F1 ) { 
-			F2 = F1; 
-			F1 = d; 
-		} else if( d<F2 ) {
-			F2 = d;
-		}
-    }
-	
-	float c = F1;
-	
-    return c;
-}
-
-float fbm( vec2 p , float time){
-	float s = 0.0;
-	float m = 0.0;
-	float a = 0.5;
-	
-	for( int i=0; i<OCTAVES; i++ ){
-		s += a * voronoi(p, time);
-		m += a;
-		a *= 0.5;
-		p *= 2.0;
-	}
-	return pow(s/m,2.0);
-}
+uniform sampler2D heightmap;
 
 void main() {
-    float displaceAmt = fbm(uv * 5.0 - 0.5, 100.0) * 50.0;
+    // float displaceAmt = fbm(uv * 5.0 - 0.5, 100.0) * 50.0;
+	float displaceAmt = texture2D(heightmap, uv).r * 200.0;
     vec3 newPosition = (position.xyz + normal.xyz * displaceAmt);
     vUv = uv;
 
-    gl_Position = vec4( uv*2.0 - 1.0, 0.0, 1.0 );
+	gl_Position = projectionMatrix  * viewMatrix * modelMatrix  * vec4( newPosition, 1.0 );
+    // gl_Position = vec4( uv*2.0 - 1.0, 0.0, 1.0 );
 }`;
   
 const WATER_FS = `
 precision highp float;
 varying vec2 vUv;
 uniform float tick;
-uniform sampler2D heightmap;
-#define OCTAVES   		5		// 7
 
-vec2 hash( vec2 p ){
-	p = vec2( dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3)));
-	return fract(sin(p)*43758.5453);
-}
+// vec3 pos_for_uv(vec2 uv) {
+// 	float height = texture2D(heightmap, uv).r;
+// 	return vec3(uv.x, uv.y, height);
+// }
 
-float voronoi( vec2 x , float time){
-	vec2 n = floor( x );
-	vec2 f = fract( x );
-	
-	float F1 = 8.0;
-	float F2 = 8.0;
-	
-	for( int j=-1; j<=1; j++ )
-		for( int i=-1; i<=1; i++ ){
-			vec2 g = vec2(i,j);
-			vec2 o = hash( n + g );
-
-			o = 0.5 + 0.41*sin( time + 6.2831*o );	
-			vec2 r = g - f + o;
-
-		float d = 	 dot(r,r)  ;
-
-		if( d<F1 ) { 
-			F2 = F1; 
-			F1 = d; 
-		} else if( d<F2 ) {
-			F2 = d;
-		}
-    }
-	
-	float c = F1;
-	
-    return c;
-}
-
-float fbm2( vec2 p , float time){
-	float s = 0.0;
-	float m = 0.0;
-	float a = 0.5;
-	
-	for( int i=0; i<3; i++ ){
-		s += a * voronoi(p, time);
-		m += a;
-		a *= 0.5;
-		p *= 2.0;
-	}
-	return pow(s/m, 2.0);
-}
-
-float fbm5( vec2 p , float time){
-	float s = 0.0;
-	float m = 0.0;
-	float a = 0.5;
-	
-	for( int i=0; i<15; i++ ){
-		s += a * voronoi(p, time);
-		m += a;
-		a *= 0.5;
-		p *= 2.0;
-	}
-	return pow(s/m, 2.0);
-}
-
-vec3 pos_for_uv(vec2 uv) {
-	float height = texture2D(heightmap, uv).r;
-	return vec3(uv.x, uv.y, height);
-}
-
-vec3 diff_for_uv(vec2 uv, vec3 pos2) {
-	return  pos_for_uv(uv)- pos2;
-}
+// vec3 diff_for_uv(vec2 uv, vec3 pos2) {
+// 	return  pos_for_uv(uv)- pos2;
+// }
 
 
-vec3 get_normal(vec3 a, vec3 b) {
-	return cross(normalize(a), normalize(b));
-}
+// vec3 get_normal(vec3 a, vec3 b) {
+// 	return cross(normalize(a), normalize(b));
+// }
 
 uniform int fakeShadow;
+uniform sampler2D heightmap;
+uniform sampler2D normalmap;
+uniform sampler2D normalmap_smooth;
 void main() {
-	float pxStep = 1.0/2048.0;
-	vec3 p   = pos_for_uv(vUv);
-
-	vec3 avgnorm = vec3(0.0);
-	vec3 Np  = diff_for_uv(vec2(vUv.x + pxStep, vUv.y), p);
-	vec3 NEp = diff_for_uv(vec2(vUv.x + pxStep, vUv.y + pxStep), p);
-	vec3 Ep  = diff_for_uv(vec2(vUv.x, vUv.y + pxStep), p);
-	vec3 SEp = diff_for_uv(vec2(vUv.x - pxStep, vUv.y + pxStep), p);
-	vec3 Sp  = diff_for_uv(vec2(vUv.x - pxStep, vUv.y), p);
-	vec3 SWp = diff_for_uv(vec2(vUv.x - pxStep, vUv.y - pxStep), p);
-	vec3 Wp  = diff_for_uv(vec2(vUv.x, vUv.y - pxStep), p);
-	vec3 NWp = diff_for_uv(vec2(vUv.x + pxStep, vUv.y - pxStep), p);
-
-
-
-	avgnorm += get_normal(Np, NEp);	
-	avgnorm += get_normal(NEp, Ep);	
-	avgnorm += get_normal(Ep, SEp);	
-	avgnorm += get_normal(SEp, Sp);	
-	avgnorm += get_normal(Sp, SWp);	
-	avgnorm += get_normal(SWp, Wp);	
-	avgnorm += get_normal(Wp, NWp);	
-	avgnorm += get_normal(NWp, Np);	
-	avgnorm += get_normal(Np, Ep);	
-	avgnorm += get_normal(Ep, Sp);	
-	avgnorm += get_normal(Sp, Wp);	
-	avgnorm += get_normal(Wp, Np);	
-	avgnorm = normalize(avgnorm);
+	vec3 normal = texture2D(normalmap, vUv).rgb;
+	gl_FragColor = vec4(normal, 1.0);
 	
 
-	gl_FragColor = vec4((avgnorm + 1.0) / 2.0, p.z);
+	// float pxStep = 1.0/2048.0;
+	// vec3 p   = pos_for_uv(vUv);
+
+	// vec3 avgnorm = vec3(0.0);
+	// vec3 Np  = diff_for_uv(vec2(vUv.x + pxStep, vUv.y), p);
+	// vec3 NEp = diff_for_uv(vec2(vUv.x + pxStep, vUv.y + pxStep), p);
+	// vec3 Ep  = diff_for_uv(vec2(vUv.x, vUv.y + pxStep), p);
+	// vec3 SEp = diff_for_uv(vec2(vUv.x - pxStep, vUv.y + pxStep), p);
+	// vec3 Sp  = diff_for_uv(vec2(vUv.x - pxStep, vUv.y), p);
+	// vec3 SWp = diff_for_uv(vec2(vUv.x - pxStep, vUv.y - pxStep), p);
+	// vec3 Wp  = diff_for_uv(vec2(vUv.x, vUv.y - pxStep), p);
+	// vec3 NWp = diff_for_uv(vec2(vUv.x + pxStep, vUv.y - pxStep), p);
+
+
+
+	// avgnorm += get_normal(Np, NEp);	
+	// avgnorm += get_normal(NEp, Ep);	
+	// avgnorm += get_normal(Ep, SEp);	
+	// avgnorm += get_normal(SEp, Sp);	
+	// avgnorm += get_normal(Sp, SWp);	
+	// avgnorm += get_normal(SWp, Wp);	
+	// avgnorm += get_normal(Wp, NWp);	
+	// avgnorm += get_normal(NWp, Np);	
+	// avgnorm += get_normal(Np, Ep);	
+	// avgnorm += get_normal(Ep, Sp);	
+	// avgnorm += get_normal(Sp, Wp);	
+	// avgnorm += get_normal(Wp, Np);	
+	// avgnorm = normalize(avgnorm);
+	
+
+	// gl_FragColor = vec4((avgnorm + 1.0) / 2.0, p.z);
 	// gl_FragColor = vec4(vec3(fbm2(vUv * 5.0 - 0.5, 100.0)), 1.0);
 }`;
 
 
 
 function generate_water_mesh() {
-	let geometry = new THREE.PlaneGeometry(2048, 2048, 1, 1);
-	let t = new THREE.TextureLoader().load(
-		'heightmap.png',
-		(texture) => {
-			var dataURL = renderer.domElement.toDataURL();
-			window.open(dataURL, "image");
-		});
-	t.magFilter = THREE.NearestFilter
-	console.log(t)
+	let geometry = new THREE.PlaneGeometry(2048, 2048, 500, 500);
+	let heightmap = new THREE.TextureLoader().load('heightmap.png');
+	let normalmap = new THREE.TextureLoader().load('normalmap.png');
+	let normalmap_smooth = new THREE.TextureLoader().load('normalmap_smooth.png');
     let uniforms = {
         tick: {type: "f", value: 0},
 		fakeShadow: {type: "i", value: 1},
-		heightmap: {type: "t", value: t}
+		heightmap: {type: "t", value: heightmap},
+		normalmap: {type: "t", value: normalmap},
+		normalmap_smooth: {type: "t", value: normalmap_smooth}
 	};
     let material = new THREE.RawShaderMaterial({
         uniforms: uniforms,
