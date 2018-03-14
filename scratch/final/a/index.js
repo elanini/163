@@ -32,7 +32,7 @@ function init() {
     // scene.add(terrain_mesh);
     scene.add(water_mesh);
 
-    renderer = new THREE.WebGLRenderer();
+    renderer = new THREE.WebGLRenderer({preserveDrawingBuffer: true});
     renderer.setClearColor(0x999999);
     renderer.setSize(2048, 2048);
     container.appendChild(renderer.domElement);
@@ -42,6 +42,9 @@ function init() {
     window.addEventListener('resize', onWindowResize, false);
 
     animate();
+    // renderk()
+    // var dataURL = renderer.domElement.toDataURL();
+    // window.open(dataURL, "image");
 }
 
 

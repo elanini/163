@@ -120,7 +120,7 @@ float fbm2( vec2 p , float time){
 	float m = 0.0;
 	float a = 0.5;
 	
-	for( int i=0; i<2; i++ ){
+	for( int i=0; i<3; i++ ){
 		s += a * voronoi(p, time);
 		m += a;
 		a *= 0.5;
@@ -189,14 +189,20 @@ void main() {
 	avgnorm = normalize(avgnorm);
 	
 
-	gl_FragColor = vec4((avgnorm + 1.0) / 2.0, 1.0);
+	gl_FragColor = vec4((avgnorm + 1.0) / 2.0, p.z);
+	// gl_FragColor = vec4(vec3(fbm2(vUv * 5.0 - 0.5, 100.0)), 1.0);
 }`;
 
 
 
 function generate_water_mesh() {
 	let geometry = new THREE.PlaneGeometry(2048, 2048, 1, 1);
-	let t = new THREE.TextureLoader().load('heightmap.png');
+	let t = new THREE.TextureLoader().load(
+		'heightmap.png',
+		(texture) => {
+			var dataURL = renderer.domElement.toDataURL();
+			window.open(dataURL, "image");
+		});
 	t.magFilter = THREE.NearestFilter
 	console.log(t)
     let uniforms = {
