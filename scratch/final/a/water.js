@@ -15,7 +15,7 @@ uniform sampler2D heightmap;
 
 void main() {
     // float displaceAmt = fbm(uv * 5.0 - 0.5, 100.0) * 50.0;
-	float displaceAmt = texture2D(heightmap, uv).r * 200.0;
+	float displaceAmt = texture2D(heightmap, uv).r * 100.0;
     vec3 newPosition = (position.xyz + normal.xyz * displaceAmt);
     vUv = uv;
 
@@ -27,6 +27,7 @@ const WATER_FS = `
 precision highp float;
 varying vec2 vUv;
 uniform float tick;
+uniform vec3 cameraPosition;
 
 // vec3 pos_for_uv(vec2 uv) {
 // 	float height = texture2D(heightmap, uv).r;
@@ -41,6 +42,14 @@ uniform float tick;
 // vec3 get_normal(vec3 a, vec3 b) {
 // 	return cross(normalize(a), normalize(b));
 // }
+// vec3 calcColor(vec3 direction, vec3 lightColor, vec3 normal) {
+//     vec3 eyeDirection = normalize(-cameraPosition);
+// 	vec3 reflectionDirection = normalize(reflect(direction, normal));
+// 	float specularLightWeighting = pow(clamp(dot(reflectionDirection, eyeDirection), 0.0, 1.0), 20.0);
+//     return  (vec3(0.5, 0.5, 0.6) * lightColor * diffuseLightWeighting ) + 
+//             (vec3(0.50, 0.50, 0.5) * lightColor * specularLightWeighting );
+// }
+
 
 uniform int fakeShadow;
 uniform sampler2D heightmap;
@@ -48,7 +57,24 @@ uniform sampler2D normalmap;
 uniform sampler2D normalmap_smooth;
 void main() {
 	vec3 normal = texture2D(normalmap, vUv).rgb;
-	gl_FragColor = vec4(normal, 1.0);
+	vec3 smooth_normal = texture2D(normalmap_smooth, vUv).rgb;
+	vec3 direction = normalize(vec3( 1.0, 5.0, -2.0));
+	vec3 lightColor = vec3(1.0);
+	float diffuseLightWeighting; 
+
+	if (fakeShadow == 0) {
+		diffuseLightWeighting = clamp(dot(direction, normal), 0.0, 1.0); 
+	} else {
+		diffuseLightWeighting = dot(direction, normal) * clamp(5.0 * dot(direction, smooth_normal), 0.0, 1.0);
+	}
+
+    vec3 eyeDirection = normalize(-cameraPosition);
+	vec3 reflectionDirection = normalize(reflect(direction, normal));
+	float specularLightWeighting = pow(clamp(dot(reflectionDirection, eyeDirection), 0.0, 1.0), 20.0);
+
+    vec3 color = (vec3(0.5, 0.5, 0.6) * lightColor * diffuseLightWeighting ) + 
+            (vec3(0.50, 0.50, 0.5) * lightColor * specularLightWeighting );
+	gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
 	
 
 	// float pxStep = 1.0/2048.0;
@@ -88,7 +114,7 @@ void main() {
 
 
 function generate_water_mesh() {
-	let geometry = new THREE.PlaneGeometry(2048, 2048, 500, 500);
+	let geometry = new THREE.PlaneGeometry(300, 300, 250, 250);
 	let heightmap = new THREE.TextureLoader().load('heightmap.png');
 	let normalmap = new THREE.TextureLoader().load('normalmap.png');
 	let normalmap_smooth = new THREE.TextureLoader().load('normalmap_smooth.png');

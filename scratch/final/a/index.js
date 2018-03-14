@@ -12,7 +12,7 @@ function init() {
     console.log(container)
     let width = 1024
     let height = 1024
-    camera = new THREE.PerspectiveCamera( 45, width / height, 1, 2000 );
+    camera = new THREE.PerspectiveCamera( 90, width / height, 1, 2000 );
     var controls = new THREE.OrbitControls(camera)
     camera.position.z = 100;
     camera.position.y = 40;
