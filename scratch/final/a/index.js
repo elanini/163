@@ -16,7 +16,6 @@ function init() {
     var controls = new THREE.OrbitControls(camera)
     camera.position.z = 100;
     camera.position.y = 40;
-    controls.update()
 
     scene = new THREE.Scene();
 
@@ -44,6 +43,14 @@ function init() {
 
     //make it so that resizing the browser window also resizes the scene
     window.addEventListener('resize', onWindowResize, false);
+    var img = new Image();
+    img.onload = function() {
+        var canvas = document.createElement("canvas");
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        console.log(ctx.getImageData(0,0,2048,2048));
+    }
+    img.src = 'heightmap.png';
 
     animate();
     // renderk()

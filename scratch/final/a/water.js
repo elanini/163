@@ -15,7 +15,7 @@ uniform sampler2D heightmap;
 
 void main() {
     // float displaceAmt = fbm(uv * 5.0 - 0.5, 100.0) * 50.0;
-	float displaceAmt = texture2D(heightmap, uv).r * 100.0;
+	float displaceAmt = texture2D(heightmap, uv).r * 25.0;
     vec3 newPosition = (position.xyz + normal.xyz * displaceAmt);
     vUv = uv;
 
@@ -56,9 +56,9 @@ uniform sampler2D heightmap;
 uniform sampler2D normalmap;
 uniform sampler2D normalmap_smooth;
 void main() {
-	vec3 normal = texture2D(normalmap, vUv).rgb;
-	vec3 smooth_normal = texture2D(normalmap_smooth, vUv).rgb;
-	vec3 direction = normalize(vec3( 1.0, 5.0, -2.0));
+	vec3 normal = texture2D(normalmap, vUv).rgb * 2.0 - 1.0;
+	vec3 smooth_normal = texture2D(normalmap_smooth, vUv).rgb * 2.0 - 1.0;
+	vec3 direction = normalize(vec3( 2.0, 5.0, 2.0));
 	vec3 lightColor = vec3(1.0);
 	float diffuseLightWeighting; 
 
@@ -114,7 +114,7 @@ void main() {
 
 
 function generate_water_mesh() {
-	let geometry = new THREE.PlaneGeometry(300, 300, 250, 250);
+	let geometry = new THREE.PlaneGeometry(100, 100, 250, 250);
 	let heightmap = new THREE.TextureLoader().load('heightmap.png');
 	let normalmap = new THREE.TextureLoader().load('normalmap.png');
 	let normalmap_smooth = new THREE.TextureLoader().load('normalmap_smooth.png');
