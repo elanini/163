@@ -183,8 +183,8 @@ function FBO_setup(){
 	//Create 2 buffer textures
 	//FBO_A = new THREE.WebGLRenderTarget( resX, resY );
 	//FBO_B = new THREE.WebGLRenderTarget( resX, resY ); 
-	FBO_A = new THREE.WebGLRenderTarget( resX, resY, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
-	FBO_B = new THREE.WebGLRenderTarget( resX, resY, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter} );
+	FBO_A = new THREE.WebGLRenderTarget( resX, resY, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter});
+	FBO_B = new THREE.WebGLRenderTarget( resX, resY, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter} );
 
 
 	
