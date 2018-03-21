@@ -20,7 +20,7 @@ void main() {
 	float Sp  = texture2D(bufferTexture, vec2(vUv.x - pxStep, vUv.y)).x;
 	float Wp  = texture2D(bufferTexture, vec2(vUv.x, vUv.y - pxStep)).x;
 	float c  = texture2D(bufferTexture, vec2(vUv.x, vUv.y)).x;
-    float factor = 14.0 * 0.016 * (Np + Ep + Sp + Wp -  4.0 * c);
+    float factor = 8.0 * 0.016 * (Np + Ep + 3.0 * Sp + Wp -  6.0 * c);
     c += factor;
     if (all(lessThan(abs(fragpos - 0.5), vec2(0.002)))) {
         gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
