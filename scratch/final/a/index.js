@@ -13,8 +13,8 @@ function init() {
     let gui = new dat.GUI({width: 300})
     container = document.getElementById('container');
     console.log(container)
-    let width = 1024
-    let height = 1024
+    let width = 512
+    let height = 512
     camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, 1, 1000 );
     camera.position.z = 1;
     // var controls = new THREE.OrbitControls(camera)
@@ -41,7 +41,7 @@ function init() {
     smoke_mesh = generate_smoke_mesh(bufferTexture)
     bufferScene.add(smoke_mesh)
 
-    plane = new THREE.PlaneBufferGeometry( window.innerWidth, window.innerHeight )
+    plane = new THREE.PlaneBufferGeometry( 1024, 1024)
 	fullScreenQuad = new THREE.Mesh( plane, new THREE.MeshBasicMaterial() );
 	scene.add(fullScreenQuad);
 

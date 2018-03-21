@@ -20,7 +20,17 @@ void main() {
 	float Sp  = texture2D(bufferTexture, vec2(vUv.x - pxStep, vUv.y)).x;
 	float Wp  = texture2D(bufferTexture, vec2(vUv.x, vUv.y - pxStep)).x;
 	float c  = texture2D(bufferTexture, vec2(vUv.x, vUv.y)).x;
-    float factor = 8.0 * 0.016 * (Np + Ep + 3.0 * Sp + Wp -  6.0 * c);
+    float timesin = sin(tick*2.0);
+    float factor1, factor2, factor;
+    // if (timesin < 0.0) {
+        factor1 = 6.0 * 0.016 * ( Np + Ep +  3.0*Sp + 4.0 * Wp -  9.0 * c);
+    // } else {
+        factor2 = 6.0 * 0.016 * ( 3.0 * Np + Ep +  Sp + 4.0 * Wp -  9.0 * c);
+    // }
+    factor = mix(factor1, factor2, sin(tick*2.0));
+    // factor = clamp(factor, 0.0, 0.01);
+    float minimum = 0.003;
+    if (factor >= -minimum && factor < 0.0) factor = -minimum;
     c += factor;
     if (all(lessThan(abs(fragpos - 0.5), vec2(0.002)))) {
         gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
